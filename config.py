@@ -10,4 +10,4 @@ class testconfig():
     num_units = 200
     batch_size = 1
     num_chars = 200
-    start_str='merchant '
+    start_str = 'merchant '
