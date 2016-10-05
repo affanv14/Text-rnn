@@ -5,6 +5,7 @@ from config import trainconfig, testconfig
 import tensorflow as tf
 from optparse import OptionParser
 import cPickle
+from nltk import word_tokenize
 
 
 def main():
@@ -13,6 +14,8 @@ def main():
                       default=False, help='no output in terminal')
     parser.add_option('-i', '--input', dest='input_file',
                       help='file for input')
+    parser.add_option('-n', '--new', dest='new',
+                      action='store_true', default=False)
     parser.add_option('-u', '--summary', dest='summary',
                       action='store_true', help='generate summary', default=False)
     parser.add_option('-s', '--save', dest='save',
@@ -21,6 +24,8 @@ def main():
                       help='generate data', action='store_true', default=False)
     parser.add_option('-d', '--debug', dest='debug',
                       action='store_true', default=False)
+    parser.add_option('-w', '--word', dest='word', action='store_true',
+                      default=False, help='learn and generate words')
     (options, args) = parser.parse_args()
 
     if not options.generate:
@@ -38,20 +43,36 @@ def train(options):
     input_file = options.input_file
     if not os.path.isfile(input_file):
         raise ValueError("Input file not found")
-    x, y, char2idx, idx2char = utils.preprocess(input_file, train_config.batch_size,
-                                                train_config.num_timesteps)
+    x, y, element2idx, idx2element = utils.preprocess(input_file, train_config.batch_size,
+                                                      train_config.num_timesteps, options.word)
+
     with tf.Graph().as_default(), tf.Session() as sess:
-        with tf.variable_scope("charrnn", reuse=None):
-            trainmodel = charrnn(train_config, len(char2idx), True)
-        saver = tf.train.Saver()
-        if not os.path.isfile('saves/' + options.save + '.pkt'):
-            sess.run(tf.initialize_all_variables())
+
+        if (os.path.isfile('saves/' + options.save + '.pkt') and os.path.isfile('saves/vars.pkl')) and not options.new:
+            with open('saves/vars.pkl', 'r') as varfile:
+                (_, __, wordgen) = cPickle.load(varfile)
+            if wordgen == options.word:
+                with tf.variable_scope("charrnn", reuse=None):
+                    trainmodel = charrnn(train_config, len(element2idx), True)
+                saver = tf.train.Saver()
+                saver.restore(sess, 'saves/' + options.save + '.pkt')
+            else:
+                raise ValueError(
+                    'Save file contains indexes for different type of elements.\n'
+                    'Use clear option to overwrite or specify different save path')
         else:
-            saver.restore(sess, 'saves/' + options.save + '.pkt')
+            print 'hahaha'
+            with tf.variable_scope("charrnn", reuse=None):
+                trainmodel = charrnn(train_config, len(element2idx), True)
+            saver = tf.train.Saver()
+            sess.run(tf.initialize_all_variables())
+
         if options.summary:
             train_writer = tf.train.SummaryWriter(
                 options.summary + '/train', sess.graph)
         state = trainmodel.init_state.eval()
+        with open('saves/vars.pkl', 'wb') as varfile:
+            cPickle.dump((element2idx, idx2element, options.word), varfile)
         for i in range(train_config.num_epochs):
             for j in range(len(x)):
                 feed_dict = {trainmodel.input_placeholder: x[j], trainmodel.target: y[j],
@@ -62,27 +83,27 @@ def train(options):
                 if not options.quiet:
                     print 'epoch(%d/%d) loss=%f' % (i, train_config.num_epochs, loss)
             saver.save(sess, 'saves/' + options.save + '.pkt')
-        with open('saves/vars.pkl', 'wb') as varfile:
-            cPickle.dump((char2idx, idx2char), varfile)
 
 
 def test(options):
     test_config = testconfig()
-    if not os.path.isfile('saves/var.pkl'):
-        assert ValueError('Var file not found.Run train first')
+    if not os.path.isfile('saves/vars.pkl'):
+        raise ValueError('Var file not found.Run train first')
     with open('saves/vars.pkl', 'r') as varfile:
-        (char2idx, idx2char) = cPickle.load(varfile)
+        (element2idx, idx2element, wordgen) = cPickle.load(varfile)
     with tf.Graph().as_default(), tf.Session() as sess:
         with tf.variable_scope("charrnn", reuse=None):
-            testmodel = charrnn(test_config, len(char2idx), False)
+            testmodel = charrnn(test_config, len(element2idx), False)
         saver = tf.train.Saver()
         if not os.path.isfile('saves/' + options.save + '.pkt'):
-            assert ValueError('checkpoint file not found run train first')
+            raise ValueError('checkpoint file not found run train first')
         else:
             saver.restore(sess, 'saves/' + options.save + '.pkt')
-
-        chars = list(test_config.start_str)
+        if wordgen:
+            elements = word_tokenize(test_config.start_str)
+        else:
+            elements = list(test_config.start_str)
         x = testmodel.sample(sess, test_config.num_chars,
-                             [char2idx[i] for i in chars])
-        print ''.join([idx2char[i] for i in x])
+                             [element2idx[i] for i in elements])
+        print ''.join([idx2element[i] for i in x])
 main()
