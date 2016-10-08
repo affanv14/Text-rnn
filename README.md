@@ -23,7 +23,7 @@
     -q,--quiet            Dont print anything on screeen
     -i,--input            specify input file
     -n,--new              start from scratch and overwrite previous save file
-    -u,--summart          generate summary
+    -u,--summary          generate summary
     -s,--save             specify save file(default is provided)
     -g,--generate         generate data
     -w,--word             trains rnn for word data
