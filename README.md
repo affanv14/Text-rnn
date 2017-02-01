@@ -1,4 +1,4 @@
-# Text-rnn
+# Text-rnn [WIP]
   Word/Character rnn in tensorflow
 
     * Input is given through text.txt
