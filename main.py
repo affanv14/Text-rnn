@@ -61,7 +61,6 @@ def train(options):
                     'Save file contains indexes for different type of elements.\n'
                     'Use clear option to overwrite or specify different save path')
         else:
-            print 'hahaha'
             with tf.variable_scope("charrnn", reuse=None):
                 trainmodel = charrnn(train_config, len(element2idx), True)
             saver = tf.train.Saver()
@@ -70,7 +69,7 @@ def train(options):
         if options.summary:
             train_writer = tf.train.SummaryWriter(
                 options.summary + '/train', sess.graph)
-        state = trainmodel.init_state.eval()
+        state = sess.run(trainmodel.init_state)
         with open('saves/vars.pkl', 'wb') as varfile:
             cPickle.dump((element2idx, idx2element, options.word), varfile)
         for i in range(train_config.num_epochs):

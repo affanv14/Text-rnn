@@ -40,7 +40,7 @@ class charrnn(object):
         self.train_op = opt.minimize(self.loss)
 
     def sample(self, sess, num_chars, start_str):
-        state = self.init_state.eval()
+        state =sess.run(self.init_state)
         for char in start_str:
             feed_dict = {self.input_placeholder: [[
                 char]], self.init_state: state}
