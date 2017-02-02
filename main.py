@@ -84,9 +84,10 @@ def train(options):
                 loss, state, output, _ = sess.run(
                     [trainmodel.loss, trainmodel.final_state, trainmodel.softmax_output,
                      trainmodel.train_op], feed_dict=feed_dict)
-                if not options.quiet:
-                    print 'epoch(%d/%d) loss=%f' % (i, train_config.num_epochs, loss)
-            saver.save(sess, 'saves/' + options.save + '.pkt')
+                if (j%(len(x)/4)==0):
+                    if not options.quiet:
+                        print 'epoch(%d/%d) loss=%f' % (i, train_config.num_epochs, loss)
+                    saver.save(sess, 'saves/' + options.save + '.pkt')
 
 
 def test(options):
