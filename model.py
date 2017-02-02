@@ -4,7 +4,7 @@ import tensorflow as tf
 
 class charrnn(object):
 
-    def __init__(self, config, vocab_size, is_training):
+    def __init__(self, config, vocab_size, is_training,keep_prob,num_cells):
 
         self.num_timesteps = config.num_timesteps
         self.num_units = config.num_units
@@ -14,6 +14,8 @@ class charrnn(object):
         self.target = tf.placeholder(
             tf.int32, [self.batch_size, self.num_timesteps])
         cell = tf.nn.rnn_cell.LSTMCell(num_units=self.num_units)
+        cell = tf.nn.rnn_cell.DropoutWrapper(cell, output_keep_prob=keep_prob)
+        cell = tf.nn.rnn_cell.MultiRNNCell([cell] * num_cells)
         with tf.variable_scope('embed'):
             embedding = tf.get_variable(
                 "embedding", [vocab_size, self.num_units])

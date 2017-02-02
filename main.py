@@ -24,6 +24,10 @@ def main():
                       help='generate data', action='store_true', default=False)
     parser.add_option('-d', '--debug', dest='debug',
                       action='store_true', default=False)
+    parser.add_option('-p', '--prob', dest='prob',
+                      help='dropout probability', default=0.5)
+    parser.add_option('-l', '--layers', dest='layers',
+                      help='number of layers in rnn', default=2)
     parser.add_option('-w', '--word', dest='word', action='store_true',
                       default=False, help='learn and generate words')
     (options, args) = parser.parse_args()
@@ -53,7 +57,7 @@ def train(options):
                 (_, __, wordgen) = cPickle.load(varfile)
             if wordgen == options.word:
                 with tf.variable_scope("charrnn", reuse=None):
-                    trainmodel = charrnn(train_config, len(element2idx), True)
+                    trainmodel = charrnn(train_config, len(element2idx), True, options.prob, options.layers)
                 saver = tf.train.Saver()
                 saver.restore(sess, 'saves/' + options.save + '.pkt')
             else:
@@ -62,7 +66,8 @@ def train(options):
                     'Use clear option to overwrite or specify different save path')
         else:
             with tf.variable_scope("charrnn", reuse=None):
-                trainmodel = charrnn(train_config, len(element2idx), True)
+                trainmodel = charrnn(train_config, len(element2idx), True, options.prob, options.layers)
+
             saver = tf.train.Saver()
             sess.run(tf.initialize_all_variables())
 
@@ -92,7 +97,7 @@ def test(options):
         (element2idx, idx2element, wordgen) = cPickle.load(varfile)
     with tf.Graph().as_default(), tf.Session() as sess:
         with tf.variable_scope("charrnn", reuse=None):
-            testmodel = charrnn(test_config, len(element2idx), False)
+            testmodel = charrnn(test_config, len(element2idx), False, 1, options.layers)
         saver = tf.train.Saver()
         if not os.path.isfile('saves/' + options.save + '.pkt'):
             raise ValueError('checkpoint file not found run train first')
