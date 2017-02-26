@@ -1,11 +1,11 @@
-# Text-rnn [WIP]
+# Text-rnn
   Word/Character rnn in tensorflow
 
     * Input is given through text.txt
     * Change rnn config in config.py
     * Default mode is for training characters
 
-#Usage
+# Usage
 
   To run the rnn with given inputfile
   ~~~
@@ -27,3 +27,6 @@
     -s,--save             specify save file(default is provided)
     -g,--generate         generate data
     -w,--word             trains rnn for word data
+
+
+  Dataset taken from Andrej Karpathy's char-rnn 

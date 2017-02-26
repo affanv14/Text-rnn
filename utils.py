@@ -16,7 +16,7 @@ def preprocess(input_file, batch_size, num_timesteps, genwords):
             element2idx[char] = idx
             idx2element[idx] = char
         indexes = [element2idx[i] for i in element_list]
-        num_batches = len(indexes) / (num_timesteps * batch_size)
+        num_batches = len(indexes) // (num_timesteps * batch_size)
         cutindex = len(indexes) % (num_batches * num_timesteps * batch_size)
         xindexes = indexes[:-cutindex]
         yindexes = indexes[1:]
